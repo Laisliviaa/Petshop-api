@@ -1,7 +1,7 @@
 # 🐾 Petshop API
 
 **Status do Projeto:** 🟢 LIVE (Ambiente de Desenvolvimento)  
-**Documentação Oficial:** [Acesse o Swagger aqui]([http://localhost:8080/swagger-ui/index.html](https://petshop-api-4.onrender.com/swagger-ui/index.html#/Pets/criar_2))  
+**Documentação Oficial:** [Acesse o Swagger aqui](https://petshop-api-4.onrender.com/swagger-ui/index.html#/Pets/criar_2)
 **Desenvolvedora:** Laís
 
 ---
@@ -31,7 +31,7 @@ API desenvolvida para a **gestão completa de um Petshop**, focando na organiza�
 ```json
 {
   "id": 1,
-  "nome": "Rex",
+  "nome": "Luky",
   "especie": "CACHORRO",
   "status": "PENDENTE",
   "cliente": {
