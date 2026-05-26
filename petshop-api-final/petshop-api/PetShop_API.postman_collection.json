@@ -1,0 +1,922 @@
+{
+  "info": {
+    "name": "PetShop API — Senac TSI",
+    "description": "Coleção completa para testar a PetShop API REST. Importe no Postman e configure a variável `base_url` e `api_key`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "api_key",
+      "value": "pk_demo_petshop_senac_2025"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔑 Autenticação",
+      "item": [
+        {
+          "name": "Gerar nova API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/auth/keys",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nomeCliente\": \"Meu Sistema\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Listar API Keys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/api/v1/auth/keys"
+          }
+        },
+        {
+          "name": "Revogar API Key",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/api/v1/auth/keys/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 Clientes",
+      "item": [
+        {
+          "name": "Listar clientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/clientes?page=0&size=10",
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar cliente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/clientes/1"
+          }
+        },
+        {
+          "name": "Filtrar clientes por nome",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/clientes?nome=Maria",
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Maria"
+                }
+              ],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "clientes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Idempotency-Key",
+                "value": "cliente-novo-001"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/clientes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Fernanda Costa\",\n  \"cpf\": \"777.888.999-00\",\n  \"email\": \"fernanda@email.com\",\n  \"telefone\": \"(11) 97777-8888\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar cliente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/clientes/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria Aparecida Oliveira Silva\",\n  \"cpf\": \"123.456.789-00\",\n  \"email\": \"maria.silva@email.com\",\n  \"telefone\": \"(11) 98888-0001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Deletar cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/clientes/4"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🐾 Pets",
+      "item": [
+        {
+          "name": "Listar pets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/pets"
+          }
+        },
+        {
+          "name": "Buscar pet por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/pets/1"
+          }
+        },
+        {
+          "name": "Filtrar pets por espécie",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pets?especie=Cachorro",
+              "query": [
+                {
+                  "key": "especie",
+                  "value": "Cachorro"
+                }
+              ],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtrar pets por porte",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/pets?porte=GRANDE",
+              "query": [
+                {
+                  "key": "porte",
+                  "value": "GRANDE"
+                }
+              ],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "pets"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar pets de um cliente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/pets/cliente/1"
+          }
+        },
+        {
+          "name": "Criar pet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Idempotency-Key",
+                "value": "pet-novo-001"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/pets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Nina\",\n  \"especie\": \"Gato\",\n  \"raca\": \"Maine Coon\",\n  \"porte\": \"MEDIO\",\n  \"clienteId\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar pet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/pets/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Thor\",\n  \"especie\": \"Cachorro\",\n  \"raca\": \"Labrador Retriever\",\n  \"porte\": \"GRANDE\",\n  \"clienteId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Deletar pet",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/pets/6"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛁 Serviços",
+      "item": [
+        {
+          "name": "Listar serviços",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/servicos"
+          }
+        },
+        {
+          "name": "Filtrar por categoria",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/servicos?categoria=Veterinário",
+              "query": [
+                {
+                  "key": "categoria",
+                  "value": "Veterinário"
+                }
+              ],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "servicos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar serviço por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/servicos/1"
+          }
+        },
+        {
+          "name": "Criar serviço",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Idempotency-Key",
+                "value": "servico-novo-001"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/servicos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Adestramento Básico\",\n  \"preco\": 150.00,\n  \"categoria\": \"Treinamento\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar serviço",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/servicos/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Banho Simples\",\n  \"preco\": 50.00,\n  \"categoria\": \"Higiene\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Deletar serviço",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/servicos/6"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📅 Agendamentos",
+      "item": [
+        {
+          "name": "Listar agendamentos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/agendamentos"
+          }
+        },
+        {
+          "name": "Filtrar por status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/agendamentos?status=PENDENTE",
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDENTE"
+                }
+              ],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agendamentos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar agendamentos por pet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/agendamentos/pet/1"
+          }
+        },
+        {
+          "name": "Buscar agendamento por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/agendamentos/1"
+          }
+        },
+        {
+          "name": "Criar agendamento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Idempotency-Key",
+                "value": "agendamento-001"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/agendamentos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dataHora\": \"2026-07-10T10:00:00\",\n  \"petId\": 3,\n  \"servicoId\": 1,\n  \"unidadeId\": 2,\n  \"observacoes\": \"Primeiro banho do pet\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar status do agendamento",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/agendamentos/1/status?novoStatus=CONFIRMADO",
+              "query": [
+                {
+                  "key": "novoStatus",
+                  "value": "CONFIRMADO"
+                }
+              ],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "agendamentos",
+                "1",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancelar agendamento",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/agendamentos/2/cancelar"
+          }
+        },
+        {
+          "name": "Deletar agendamento",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/agendamentos/5"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏪 Unidades",
+      "item": [
+        {
+          "name": "Listar unidades",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/unidades"
+          }
+        },
+        {
+          "name": "Listar apenas unidades ativas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/unidades?apenasAtivas=true",
+              "query": [
+                {
+                  "key": "apenasAtivas",
+                  "value": "true"
+                }
+              ],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "unidades"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar unidade por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/unidades/1"
+          }
+        },
+        {
+          "name": "Criar unidade",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/unidades",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"PetShop Pinheiros\",\n  \"endereco\": \"R. dos Pinheiros, 500 — Pinheiros, São Paulo/SP\",\n  \"telefone\": \"(11) 3333-2000\",\n  \"ativa\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar unidade",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/unidades/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"PetShop Centro — Renovado\",\n  \"endereco\": \"Av. Paulista, 1000 — Bela Vista, São Paulo/SP\",\n  \"telefone\": \"(11) 3333-1001\",\n  \"ativa\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Deletar unidade",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/unidades/3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👔 Gerentes",
+      "item": [
+        {
+          "name": "Listar gerentes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/gerentes"
+          }
+        },
+        {
+          "name": "Buscar gerente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/gerentes/1"
+          }
+        },
+        {
+          "name": "Criar gerente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/gerentes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Patricia Nunes\",\n  \"cpf\": \"111.333.555-77\",\n  \"email\": \"patricia@petshop.com.br\",\n  \"unidadeId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar gerente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/gerentes/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Carlos Eduardo Ferreira\",\n  \"cpf\": \"111.222.333-44\",\n  \"email\": \"carlos.ferreira@petshop.com.br\",\n  \"unidadeId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Deletar gerente",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/gerentes/3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔄 Versionamento (v1 vs v2)",
+      "item": [
+        {
+          "name": "[v1] Listar pets — simplificado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-API-Version",
+                "value": "v1"
+              }
+            ],
+            "url": "{{base_url}}/api/versioned/v1/pets"
+          }
+        },
+        {
+          "name": "[v2] Listar pets — completo HATEOAS",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-API-Version",
+                "value": "v2"
+              }
+            ],
+            "url": "{{base_url}}/api/versioned/v2/pets"
+          }
+        },
+        {
+          "name": "[v1] Buscar pet ID 1 — simplificado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-API-Version",
+                "value": "v1"
+              }
+            ],
+            "url": "{{base_url}}/api/versioned/v1/pets/1"
+          }
+        },
+        {
+          "name": "[v2] Buscar pet ID 1 — completo HATEOAS",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-API-Version",
+                "value": "v2"
+              }
+            ],
+            "url": "{{base_url}}/api/versioned/v2/pets/1"
+          }
+        },
+        {
+          "name": "Versão inválida → 400",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-API-Version",
+                "value": "v99"
+              }
+            ],
+            "url": "{{base_url}}/api/v1/pets"
+          }
+        }
+      ]
+    }
+  ]
+}
