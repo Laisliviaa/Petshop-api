@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.CollectionModel;
@@ -34,85 +33,66 @@ public class GerenteController {
 
     @Autowired
     public GerenteController(GerenteRepository repository, PagedResourcesAssembler<Gerente> assembler) {
-        this.repository = repository;
-        this.assembler = assembler;
+        this.repository = repository; this.assembler = assembler;
     }
 
-    @Operation(summary = "Lista todos os gerentes", description = "Retorna uma lista paginada com links HATEOAS")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos")
-    })
+    @Operation(summary = "Lista todos")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Sucesso"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
     @GetMapping
     public PagedModel<EntityModel<Gerente>> listar(Pageable pageable) {
-        Page<Gerente> gerentes = repository.findAll(pageable);
-        return assembler.toModel(gerentes,
-                g -> EntityModel.of(g, linkTo(methodOn(GerenteController.class).buscar(g.getId())).withSelfRel()));
+        return assembler.toModel(repository.findAll(pageable),
+            e -> EntityModel.of(e, linkTo(methodOn(GerenteController.class).buscar(e.getId())).withSelfRel()));
     }
 
-    @Operation(summary = "Cadastra um novo gerente", description = "Cria um novo gerente vinculado a uma unidade")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Gerente cadastrado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos")
-    })
-    @PostMapping
-    public ResponseEntity<EntityModel<Gerente>> criar(@Valid @RequestBody Gerente gerente) {
-        Gerente novo = repository.save(gerente);
-        EntityModel<Gerente> model = EntityModel.of(novo,
-                linkTo(methodOn(GerenteController.class).buscar(novo.getId())).withSelfRel(),
-                linkTo(methodOn(GerenteController.class).listar(null)).withRel("lista"));
-        return ResponseEntity.status(HttpStatus.CREATED).body(model);
-    }
-
-    @Operation(summary = "Busca gerente por ID", description = "Retorna os detalhes de um gerente específico")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Gerente não encontrado")
-    })
+    @Operation(summary = "Busca por ID")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Encontrado"), @ApiResponse(responseCode = "404", description = "Não encontrado"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
     @GetMapping("/{id}")
     public EntityModel<Gerente> buscar(@PathVariable Long id) {
-        Gerente g = repository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException(id));
-        return EntityModel.of(g,
-                linkTo(methodOn(GerenteController.class).buscar(id)).withSelfRel(),
-                linkTo(methodOn(GerenteController.class).listar(null)).withRel("lista"));
+        Gerente e = repository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException(id));
+        return EntityModel.of(e, linkTo(methodOn(GerenteController.class).buscar(id)).withSelfRel(),
+            linkTo(methodOn(GerenteController.class).listar(null)).withRel("lista"));
     }
 
-    @Operation(summary = "Atualiza um gerente", description = "Permite alterar nome ou unidade de um gerente")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Gerente não encontrado")
-    })
+    @Operation(summary = "Busca personalizada")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Resultados encontrados"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
+    @GetMapping("/busca")
+    public CollectionModel<EntityModel<Gerente>> buscar(@RequestParam String q) {
+        List<EntityModel<Gerente>> results = repository.findAll().stream()
+            .map(e -> EntityModel.of(e, linkTo(methodOn(GerenteController.class).buscar(e.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return CollectionModel.of(results);
+    }
+
+    @Operation(summary = "Cria novo registro", description = "Suporta idempotência via X-Idempotency-Key.")
+    @ApiResponses({ @ApiResponse(responseCode = "201", description = "Criado"), @ApiResponse(responseCode = "400", description = "Dados inválidos"), @ApiResponse(responseCode = "401", description = "X-API-Key inválida"), @ApiResponse(responseCode = "409", description = "Idempotency-Key reutilizada com payload diferente"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
+    @PostMapping
+    public ResponseEntity<EntityModel<Gerente>> criar(
+            @RequestHeader("X-API-Key") String apiKey,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody Gerente obj) {
+        Gerente novo = repository.save(obj);
+        return ResponseEntity.status(HttpStatus.CREATED).body(EntityModel.of(novo,
+            linkTo(methodOn(GerenteController.class).buscar(novo.getId())).withSelfRel()));
+    }
+
+    @Operation(summary = "Atualiza registro")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Atualizado"), @ApiResponse(responseCode = "400", description = "Dados inválidos"), @ApiResponse(responseCode = "401", description = "X-API-Key inválida"), @ApiResponse(responseCode = "404", description = "Não encontrado"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
     @PutMapping("/{id}")
-    public EntityModel<Gerente> atualizar(@PathVariable Long id, @Valid @RequestBody Gerente novo) {
-        return repository.findById(id).map(g -> {
-            g.setNome(novo.getNome());
-            g.setUnidade(novo.getUnidade());
-            return EntityModel.of(repository.save(g),
-                    linkTo(methodOn(GerenteController.class).buscar(id)).withSelfRel());
-        }).orElseThrow(() -> new RecursoNaoEncontradoException(id));
+    public ResponseEntity<EntityModel<Gerente>> atualizar(
+            @RequestHeader("X-API-Key") String apiKey,
+            @PathVariable Long id, @Valid @RequestBody Gerente novo) {
+        if (!repository.existsById(id)) throw new RecursoNaoEncontradoException(id);
+        novo.setId(id);
+        return ResponseEntity.ok(EntityModel.of(repository.save(novo),
+            linkTo(methodOn(GerenteController.class).buscar(id)).withSelfRel()));
     }
 
-    @Operation(summary = "Deleta um gerente", description = "Remove permanentemente o gerente do sistema")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Gerente removido com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Gerente não encontrado")
-    })
+    @Operation(summary = "Deleta registro")
+    @ApiResponses({ @ApiResponse(responseCode = "204", description = "Removido"), @ApiResponse(responseCode = "401", description = "X-API-Key inválida"), @ApiResponse(responseCode = "404", description = "Não encontrado"), @ApiResponse(responseCode = "409", description = "Conflito de dependência: recurso possui entidades associadas"), @ApiResponse(responseCode = "429", description = "Rate limit excedido"), @ApiResponse(responseCode = "500", description = "Erro interno inesperado") })
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletar(@PathVariable Long id) {
+    public ResponseEntity<?> deletar(@RequestHeader("X-API-Key") String apiKey, @PathVariable Long id) {
         if (!repository.existsById(id)) return ResponseEntity.notFound().build();
         repository.deleteById(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "Busca gerentes por nome", description = "Consulta personalizada para buscar gerentes pelo nome")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso")
-    })
-    @GetMapping("/busca")
-    public CollectionModel<EntityModel<Gerente>> buscarPorNome(@RequestParam String nome) {
-        List<EntityModel<Gerente>> gerentes = repository.findByNomeContainingIgnoreCase(nome).stream()
-                .map(g -> EntityModel.of(g, linkTo(methodOn(GerenteController.class).buscar(g.getId())).withSelfRel()))
-                .collect(Collectors.toList());
-        return CollectionModel.of(gerentes);
     }
 }

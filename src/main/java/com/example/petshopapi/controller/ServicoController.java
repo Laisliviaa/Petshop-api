@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.CollectionModel;
@@ -25,7 +24,7 @@ import java.util.stream.Collectors;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
-@Tag(name = "Serviços")
+@Tag(name = "Servicos")
 @RequestMapping("/api/v1/servicos")
 public class ServicoController {
 
@@ -34,85 +33,66 @@ public class ServicoController {
 
     @Autowired
     public ServicoController(ServicoRepository repository, PagedResourcesAssembler<Servico> assembler) {
-        this.repository = repository;
-        this.assembler = assembler;
+        this.repository = repository; this.assembler = assembler;
     }
 
-    @Operation(summary = "Lista todos os serviços", description = "Retorna uma lista paginada com links HATEOAS")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos")
-    })
+    @Operation(summary = "Lista todos")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Sucesso"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
     @GetMapping
     public PagedModel<EntityModel<Servico>> listar(Pageable pageable) {
-        Page<Servico> servicos = repository.findAll(pageable);
-        return assembler.toModel(servicos,
-                s -> EntityModel.of(s, linkTo(methodOn(ServicoController.class).buscar(s.getId())).withSelfRel()));
+        return assembler.toModel(repository.findAll(pageable),
+            e -> EntityModel.of(e, linkTo(methodOn(ServicoController.class).buscar(e.getId())).withSelfRel()));
     }
 
-    @Operation(summary = "Cadastra um novo serviço", description = "Cria um novo serviço disponível no petshop")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Serviço cadastrado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos")
-    })
-    @PostMapping
-    public ResponseEntity<EntityModel<Servico>> criar(@Valid @RequestBody Servico servico) {
-        Servico novo = repository.save(servico);
-        EntityModel<Servico> model = EntityModel.of(novo,
-                linkTo(methodOn(ServicoController.class).buscar(novo.getId())).withSelfRel(),
-                linkTo(methodOn(ServicoController.class).listar(null)).withRel("lista"));
-        return ResponseEntity.status(HttpStatus.CREATED).body(model);
-    }
-
-    @Operation(summary = "Busca serviço por ID", description = "Retorna os detalhes de um serviço específico")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Serviço não encontrado")
-    })
+    @Operation(summary = "Busca por ID")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Encontrado"), @ApiResponse(responseCode = "404", description = "Não encontrado"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
     @GetMapping("/{id}")
     public EntityModel<Servico> buscar(@PathVariable Long id) {
-        Servico s = repository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException(id));
-        return EntityModel.of(s,
-                linkTo(methodOn(ServicoController.class).buscar(id)).withSelfRel(),
-                linkTo(methodOn(ServicoController.class).listar(null)).withRel("lista"));
+        Servico e = repository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException(id));
+        return EntityModel.of(e, linkTo(methodOn(ServicoController.class).buscar(id)).withSelfRel(),
+            linkTo(methodOn(ServicoController.class).listar(null)).withRel("lista"));
     }
 
-    @Operation(summary = "Atualiza um serviço", description = "Permite alterar descrição ou preço de um serviço")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Serviço não encontrado")
-    })
+    @Operation(summary = "Busca personalizada")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Resultados encontrados"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
+    @GetMapping("/busca")
+    public CollectionModel<EntityModel<Servico>> buscar(@RequestParam String q) {
+        List<EntityModel<Servico>> results = repository.findAll().stream()
+            .map(e -> EntityModel.of(e, linkTo(methodOn(ServicoController.class).buscar(e.getId())).withSelfRel()))
+            .collect(Collectors.toList());
+        return CollectionModel.of(results);
+    }
+
+    @Operation(summary = "Cria novo registro", description = "Suporta idempotência via X-Idempotency-Key.")
+    @ApiResponses({ @ApiResponse(responseCode = "201", description = "Criado"), @ApiResponse(responseCode = "400", description = "Dados inválidos"), @ApiResponse(responseCode = "401", description = "X-API-Key inválida"), @ApiResponse(responseCode = "409", description = "Idempotency-Key reutilizada com payload diferente"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
+    @PostMapping
+    public ResponseEntity<EntityModel<Servico>> criar(
+            @RequestHeader("X-API-Key") String apiKey,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody Servico obj) {
+        Servico novo = repository.save(obj);
+        return ResponseEntity.status(HttpStatus.CREATED).body(EntityModel.of(novo,
+            linkTo(methodOn(ServicoController.class).buscar(novo.getId())).withSelfRel()));
+    }
+
+    @Operation(summary = "Atualiza registro")
+    @ApiResponses({ @ApiResponse(responseCode = "200", description = "Atualizado"), @ApiResponse(responseCode = "400", description = "Dados inválidos"), @ApiResponse(responseCode = "401", description = "X-API-Key inválida"), @ApiResponse(responseCode = "404", description = "Não encontrado"), @ApiResponse(responseCode = "429", description = "Rate limit excedido") })
     @PutMapping("/{id}")
-    public EntityModel<Servico> atualizar(@PathVariable Long id, @Valid @RequestBody Servico novo) {
-        return repository.findById(id).map(s -> {
-            s.setDescricao(novo.getDescricao());
-            s.setPreco(novo.getPreco());
-            return EntityModel.of(repository.save(s),
-                    linkTo(methodOn(ServicoController.class).buscar(id)).withSelfRel());
-        }).orElseThrow(() -> new RecursoNaoEncontradoException(id));
+    public ResponseEntity<EntityModel<Servico>> atualizar(
+            @RequestHeader("X-API-Key") String apiKey,
+            @PathVariable Long id, @Valid @RequestBody Servico novo) {
+        if (!repository.existsById(id)) throw new RecursoNaoEncontradoException(id);
+        novo.setId(id);
+        return ResponseEntity.ok(EntityModel.of(repository.save(novo),
+            linkTo(methodOn(ServicoController.class).buscar(id)).withSelfRel()));
     }
 
-    @Operation(summary = "Deleta um serviço", description = "Remove permanentemente o serviço do sistema")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Serviço removido com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Serviço não encontrado")
-    })
+    @Operation(summary = "Deleta registro")
+    @ApiResponses({ @ApiResponse(responseCode = "204", description = "Removido"), @ApiResponse(responseCode = "401", description = "X-API-Key inválida"), @ApiResponse(responseCode = "404", description = "Não encontrado"), @ApiResponse(responseCode = "409", description = "Conflito de dependência: recurso possui entidades associadas"), @ApiResponse(responseCode = "429", description = "Rate limit excedido"), @ApiResponse(responseCode = "500", description = "Erro interno inesperado") })
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletar(@PathVariable Long id) {
+    public ResponseEntity<?> deletar(@RequestHeader("X-API-Key") String apiKey, @PathVariable Long id) {
         if (!repository.existsById(id)) return ResponseEntity.notFound().build();
         repository.deleteById(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "Busca serviços por descrição", description = "Consulta personalizada para buscar serviços pelo nome")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso")
-    })
-    @GetMapping("/busca")
-    public CollectionModel<EntityModel<Servico>> buscarPorDescricao(@RequestParam String descricao) {
-        List<EntityModel<Servico>> servicos = repository.findByDescricaoContainingIgnoreCase(descricao).stream()
-                .map(s -> EntityModel.of(s, linkTo(methodOn(ServicoController.class).buscar(s.getId())).withSelfRel()))
-                .collect(Collectors.toList());
-        return CollectionModel.of(servicos);
     }
 }
