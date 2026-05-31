@@ -251,6 +251,7 @@ public class PetController {
         return ResponseEntity.noContent().build();
     }
 
+    // ─── helpers ─────────────────────────────────────────────────────────────
 
     private Pet fromRequest(PetRequest req, Cliente cliente) {
         Pet p = new Pet();
