@@ -294,12 +294,12 @@
     .badge.VISITANTE   { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
     .key-mono { font-family: monospace; font-size: .75rem; color: var(--muted); }
 
-    .btn-revoke {
+    .btn-del {
       background: #fef2f2; color: #dc2626; border: 1.5px solid #fecaca;
       border-radius: 7px; padding: .28rem .8rem; font-size: .73rem; font-weight: 800;
       cursor: pointer; transition: all .15s; font-family: 'Nunito', sans-serif;
     }
-    .btn-revoke:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+    .btn-del:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
 
     .btn-usar {
       background: var(--purple-pale); color: var(--purple); border: 1.5px solid var(--border);
@@ -555,7 +555,7 @@
           <td style="display:flex;gap:.4rem;flex-wrap:wrap">
             ${k.active
               ? `<button class="btn-usar" onclick="aplicarChave('${k.apiKey||k.keyValue||''}')">Usar</button>
-                 <button class="btn-revoke" onclick="revogarChave(${k.id})">Revogar</button>`
+                 <button class="btn-del" onclick="deletarChave(${k.id})">Excluir</button>`
               : '<span style="color:var(--muted);font-size:.75rem">—</span>'}
           </td>
         </tr>`).join('')}</tbody></table>`;
@@ -563,9 +563,9 @@
   }
 
   function aplicarChave(key) { document.getElementById('apiKeyInput').value = key; toast('Chave ativa definida! 🐾', 'success'); }
-  async function revogarChave(id) {
-    if (!confirm('Revogar esta chave? Ela não poderá mais ser usada.')) return;
-    try { await req('/api/v1/apikeys/' + id, 'DELETE'); toast('Chave revogada!', 'success'); carregarChaves(); }
+  async function deletarChave(id) {
+    if (!confirm('Excluir esta chave permanentemente? Essa ação não pode ser desfeita.')) return;
+    try { await req('/api/v1/apikeys/' + id, 'DELETE'); toast('Chave excluída!', 'success'); carregarChaves(); }
     catch(e) { toast(e.message, 'error'); }
   }
 
