@@ -2,6 +2,7 @@ package com.example.petshopapi.controller;
 
 import com.example.petshopapi.apikey.*;
 import com.example.petshopapi.exception.ApiErrorResponse;
+import com.example.petshopapi.exception.ConflictException;
 import com.example.petshopapi.exception.RecursoNaoEncontradoException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,7 +30,7 @@ import java.util.List;
         |---|---|
         | `VISITANTE` | Apenas GET |
         | `FUNCIONARIO` | GET + POST + PUT |
-        | `ADMIN` | Tudo + DELETE + revogar chaves |
+        | `ADMIN` | Tudo + DELETE |
 
         **Chaves pré-carregadas no DataInitializer:**
 
@@ -40,6 +41,10 @@ import java.util.List;
         | `petshop-visitante-key-2026` | VISITANTE |
 
         **Endpoint de geração (`POST /api/v1/apikeys`) é público** — não exige X-API-Key.
+
+        **Regras para exclusão (`DELETE`):**
+        - Não é possível excluir a própria chave em uso
+        - Não é possível excluir a última chave ADMIN ativa
         """)
 public class ApiKeyController {
 
@@ -47,7 +52,7 @@ public class ApiKeyController {
 
     @Operation(summary = "Gera nova API Key",
                description = "**Público — não exige X-API-Key.** "
-                           + "Após gerar, copie o campo `apiKey` e use-o no header `X-API-Key` das demais chamadas.")
+                           + "Após gerar, copie o campo `apiKey` e use-o no header `X-API-Key`.")
     @ApiResponses({
         @ApiResponse(responseCode = "201",
             description = "API Key gerada com sucesso",
@@ -105,22 +110,30 @@ public class ApiKeyController {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("ApiKey", id));
     }
 
-    @Operation(summary = "Revoga API Key",
-               description = "Requer role **ADMIN**. "
-                           + "A chave é desativada (`active: false`) mas não removida do banco, "
-                           + "mantendo o histórico de acesso.")
+    @Operation(summary = "Exclui API Key",
+               description = """
+                       Requer role **ADMIN**. Remove a chave permanentemente do banco.
+
+                       **Regras de proteção:**
+                       - Não é possível excluir a própria chave que está sendo usada na requisição
+                       - Não é possível excluir a última chave ADMIN ativa (evita lock-out)
+                       """)
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Chave revogada com sucesso (active: false)"),
+        @ApiResponse(responseCode = "204", description = "Chave excluída com sucesso"),
         @ApiResponse(responseCode = "401",
             description = "Header X-API-Key ausente ou inválido",
             content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = ApiErrorResponse.class))),
         @ApiResponse(responseCode = "403",
-            description = "Apenas ADMIN pode revogar chaves",
+            description = "Apenas ADMIN pode excluir chaves",
             content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = ApiErrorResponse.class))),
         @ApiResponse(responseCode = "404",
             description = "Chave não encontrada",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(implementation = ApiErrorResponse.class))),
+        @ApiResponse(responseCode = "409",
+            description = "Tentativa de excluir a própria chave ativa ou a última chave ADMIN",
             content = @Content(mediaType = "application/json",
                 schema = @Schema(implementation = ApiErrorResponse.class))),
         @ApiResponse(responseCode = "429",
@@ -129,14 +142,35 @@ public class ApiKeyController {
                 schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiKeyResponse> revogar(
+    public ResponseEntity<Void> deletar(
             @Parameter(hidden = true) @RequestHeader("X-API-Key") String apiKey,
-            @Parameter(description = "ID da API Key a revogar", example = "1", required = true)
+            @Parameter(description = "ID da API Key a excluir", example = "2", required = true)
             @PathVariable Long id) {
+
         ApiKey key = apiKeyRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("ApiKey", id));
-        key.setActive(false);
-        return ResponseEntity.ok(toResponse(apiKeyRepository.save(key)));
+
+        // Impede excluir a própria chave que está sendo usada na requisição
+        if (key.getKeyValue().equals(apiKey)) {
+            throw new ConflictException(
+                    "Não é possível excluir a própria chave em uso. "
+                    + "Autentique-se com outra chave ADMIN para excluir esta.");
+        }
+
+        // Impede excluir a última chave ADMIN ativa
+        if (key.getRole() == ApiKey.Role.ADMIN) {
+            long adminsAtivos = apiKeyRepository.findAll().stream()
+                    .filter(k -> k.getRole() == ApiKey.Role.ADMIN && k.isActive())
+                    .count();
+            if (adminsAtivos <= 1) {
+                throw new ConflictException(
+                        "Não é possível excluir a última chave ADMIN ativa. "
+                        + "Crie outra chave ADMIN antes de excluir esta.");
+            }
+        }
+
+        apiKeyRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     private ApiKeyResponse toResponse(ApiKey k) {
