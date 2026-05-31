@@ -576,7 +576,7 @@
       <div class="card-id">#${c.id} · Cliente</div>
       <div class="card-name">${c.nome}</div>
       <div class="card-sub">📄 ${c.cpf || '—'}</div>
-      <div class="card-tags"><span class="tag blue">🐾 ${c.pets ? c.pets.length : 0} pet(s)</span></div>
+      <div class="card-tags"><span class="tag blue">🐾 ${c.totalPets ?? 0} pet(s)</span></div>
       <div class="card-actions">
         <button class="btn-sm edit" onclick="abrirModal(${c.id})">Editar</button>
         <button class="btn-sm del"  onclick="deletar(${c.id})">Deletar</button>
@@ -590,8 +590,8 @@
     return `<div class="card">
       <div class="card-id">#${p.id} · Pet</div>
       <div class="card-name">${p.nome}</div>
-      <div class="card-sub">${p.cliente ? '👤 ' + p.cliente.nome : '—'}</div>
-      <div class="card-tags">${tagEsp}${p.servicos?`<span class="tag green">✂️ ${p.servicos.length} serviço(s)</span>`:''}</div>
+      <div class="card-sub">${p.nomeCliente ? '👤 ' + p.nomeCliente : '—'}</div>
+      <div class="card-tags">${tagEsp}${p.totalServicos?`<span class="tag green">✂️ ${p.totalServicos} serviço(s)</span>`:''}</div>
       <div class="card-actions">
         <button class="btn-sm edit" onclick="abrirModal(${p.id})">Editar</button>
         <button class="btn-sm del"  onclick="deletar(${p.id})">Deletar</button>
@@ -603,12 +603,12 @@
     const sc = { PENDENTE:'yellow', CONCLUIDO:'green', CANCELADO:'red' };
     return `<div class="card">
       <div class="card-id">#${a.id} · Agendamento</div>
-      <div class="card-name">${a.pet ? a.pet.nome : 'Pet #?'}</div>
+      <div class="card-name">${a.nomePet || 'Pet #?'}</div>
       <div class="card-sub">📅 ${dt}</div>
       <div class="card-tags">
         <span class="tag ${sc[a.status]||''}">${a.status||'—'}</span>
-        ${a.servico ? `<span class="tag blue">✂️ ${a.servico.descricao}</span>` : ''}
-        ${a.unidade ? `<span class="tag">${a.unidade.nome}</span>` : ''}
+        ${a.nomeServico ? `<span class="tag blue">✂️ ${a.nomeServico}</span>` : ''}
+        ${a.nomeUnidade ? `<span class="tag">${a.nomeUnidade}</span>` : ''}
       </div>
       ${a.observacoes ? `<div class="card-meta">📝 ${a.observacoes}</div>` : ''}
       <div class="card-actions">
@@ -645,7 +645,7 @@
     return `<div class="card">
       <div class="card-id">#${g.id} · Gerente</div>
       <div class="card-name">${g.nome}</div>
-      <div class="card-sub">${g.unidade ? '🏥 ' + g.unidade.nome : '—'}</div>
+      <div class="card-sub">${g.nomeUnidade ? '🏥 ' + g.nomeUnidade : '—'}</div>
       <div class="card-tags"></div>
       <div class="card-actions">
         <button class="btn-sm edit" onclick="abrirModal(${g.id})">Editar</button>
