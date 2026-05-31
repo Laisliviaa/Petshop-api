@@ -1,51 +1,66 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.4</version>
-        <relativePath/>
-    </parent>
-    <groupId>com.example</groupId>
-    <artifactId>petshop-api</artifactId>
-    <version>2.0.0</version>
-    <name>petshop-api</name>
-    <description>API RESTful de gestão de PetShop — Projeto Senac TSI</description>
-    <properties>
-        <java.version>17</java.version>
-    </properties>
-    <dependencies>
-        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
-        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-hateoas</artifactId></dependency>
-        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-jpa</artifactId></dependency>
-        <dependency><groupId>com.h2database</groupId><artifactId>h2</artifactId><scope>runtime</scope></dependency>
-        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-validation</artifactId></dependency>
-        <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.bucket4j</groupId>
-            <artifactId>bucket4j-core</artifactId>
-            <version>8.10.1</version>
-        </dependency>
-        <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
-    </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId></exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+package com.example.petshopapi.versioning;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+import java.util.Set;
+
+/**
+ * Versionamento de API via header X-API-Version (Media Type / Header Versioning).
+ *
+ * Esta é a abordagem correta para versionamento RESTful, pois:
+ *  - Mantém URLs limpas e estáveis (/api/v1/clientes para sempre)
+ *  - O cliente negocia a versão via header, sem mudar o endpoint
+ *  - Versão ausente assume "1" (backward compatible)
+ *  - Versão inválida retorna 400 com mensagem clara
+ *
+ * Versões suportadas: 1 (padrão) e 2
+ *  - v1: resposta padrão com HATEOAS
+ *  - v2: resposta enriquecida com metadados adicionais (totalElements, totalPages, etc.)
+ *
+ * Aplicado a todas as rotas /api/** via WebMvcConfig.
+ */
+@Slf4j
+@Component
+public class ApiVersionInterceptor implements HandlerInterceptor {
+
+    private static final Set<String> SUPPORTED = Set.of("1", "2");
+
+    @Override
+    public boolean preHandle(HttpServletRequest request,
+                             HttpServletResponse response,
+                             Object handler) throws Exception {
+
+        String raw = request.getHeader("X-API-Version");
+
+        if (raw == null || raw.isBlank()) {
+            // Versão ausente: assume v1 (backward compatibility)
+            response.setHeader("X-API-Version", "1");
+            request.setAttribute("apiVersion", "1");
+            return true;
+        }
+
+        String version = raw.trim().toLowerCase().replace("v", "");
+
+        if (!SUPPORTED.contains(version)) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(String.format(
+                    "{\"timestamp\":\"%s\",\"status\":400,\"erro\":\"Bad Request\","
+                    + "\"mensagem\":\"Versão de API inválida: '%s'. "
+                    + "Versões suportadas: 1 (padrão) ou 2. "
+                    + "Use o header X-API-Version: 1 ou X-API-Version: 2.\","
+                    + "\"caminho\":\"%s\"}",
+                    java.time.Instant.now(), raw, request.getRequestURI()));
+            return false;
+        }
+
+        log.debug("X-API-Version={} path={}", version, request.getRequestURI());
+        response.setHeader("X-API-Version", version);
+        request.setAttribute("apiVersion", version);
+        return true;
+    }
+}
