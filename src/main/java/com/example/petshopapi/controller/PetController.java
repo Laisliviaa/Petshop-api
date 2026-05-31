@@ -251,7 +251,6 @@ public class PetController {
         return ResponseEntity.noContent().build();
     }
 
-    // ─── helpers ─────────────────────────────────────────────────────────────
 
     private Pet fromRequest(PetRequest req, Cliente cliente) {
         Pet p = new Pet();
@@ -262,7 +261,11 @@ public class PetController {
     }
 
     private PetResponse toResponse(Pet p) {
-        return new PetResponse(p.getId(), p.getNome(), p.getEspecie(),
+        return new PetResponse(
+                p.getId(),
+                p.getNome(),
+                p.getEspecie(),
+                p.getCliente() != null ? p.getCliente().getId()   : null,
                 p.getCliente() != null ? p.getCliente().getNome() : null,
                 p.getServicos() != null ? p.getServicos().size() : 0);
     }
