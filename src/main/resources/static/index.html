@@ -664,7 +664,7 @@
   async function petFields(d={}) {
     const clientes = await req('/api/v1/clientes?size=100').catch(()=>({_embedded:{clienteResponseList:[]}}));
     const lista = clientes?._embedded?.clienteResponseList || [];
-    const opts = lista.map(c => `<option value="${c.id}" ${d.cliente?.id==c.id?'selected':''}>${c.nome} (CPF: ${c.cpf})</option>`).join('');
+    const opts = lista.map(c => `<option value="${c.id}" ${d.clienteId==c.id?'selected':''}>${c.nome} (CPF: ${c.cpf})</option>`).join('');
     return `
     <div class="form-group"><label>Nome *</label><input id="f_nome" value="${d.nome||''}" placeholder="Rex" /></div>
     <div class="form-group"><label>Espécie</label><input id="f_especie" value="${d.especie||''}" placeholder="Cachorro" /></div>
@@ -679,9 +679,9 @@
       req('/api/v1/servicos?size=100').catch(()=>({_embedded:{servicoResponseList:[]}})),
       req('/api/v1/unidades?size=100').catch(()=>({_embedded:{unidadeResponseList:[]}}))
     ]);
-    const optsPets = (pets?._embedded?.petResponseList||[]).map(p=>`<option value="${p.id}" ${d.pet?.id==p.id?'selected':''}>${p.nome} (${p.especie})</option>`).join('');
-    const optsServicos = (servicos?._embedded?.servicoResponseList||[]).map(s=>`<option value="${s.id}" ${d.servico?.id==s.id?'selected':''}>${s.descricao} — R$ ${s.preco}</option>`).join('');
-    const optsUnidades = (unidades?._embedded?.unidadeResponseList||[]).map(u=>`<option value="${u.id}" ${d.unidade?.id==u.id?'selected':''}>${u.nome}</option>`).join('');
+    const optsPets = (pets?._embedded?.petResponseList||[]).map(p=>`<option value="${p.id}" ${d.petId==p.id?'selected':''}>${p.nome} (${p.especie})</option>`).join('');
+    const optsServicos = (servicos?._embedded?.servicoResponseList||[]).map(s=>`<option value="${s.id}" ${d.servicoId==s.id?'selected':''}>${s.descricao} — R$ ${s.preco}</option>`).join('');
+    const optsUnidades = (unidades?._embedded?.unidadeResponseList||[]).map(u=>`<option value="${u.id}" ${d.unidadeId==u.id?'selected':''}>${u.nome}</option>`).join('');
     return `
     <div class="form-group"><label>Pet *</label><select id="f_petId"><option value="">Selecione...</option>${optsPets}</select></div>
     <div class="form-group"><label>Serviço *</label><select id="f_servicoId"><option value="">Selecione...</option>${optsServicos}</select></div>
@@ -718,7 +718,7 @@
 
   async function gerenteFields(d={}) {
     const unidades = await req('/api/v1/unidades?size=100').catch(()=>({_embedded:{unidadeResponseList:[]}}));
-    const opts = (unidades?._embedded?.unidadeResponseList||[]).map(u=>`<option value="${u.id}" ${d.unidade?.id==u.id?'selected':''}>${u.nome}</option>`).join('');
+    const opts = (unidades?._embedded?.unidadeResponseList||[]).map(u=>`<option value="${u.id}" ${d.unidadeId==u.id?'selected':''}>${u.nome}</option>`).join('');
     return `
     <div class="form-group"><label>Nome *</label><input id="f_nome" value="${d.nome||''}" placeholder="João Silva" /></div>
     <div class="form-group"><label>Unidade *</label><select id="f_unidadeId"><option value="">Selecione...</option>${opts}</select></div>
