@@ -325,9 +325,12 @@ public class AgendamentoController {
     private AgendamentoResponse toResponse(Agendamento a) {
         return new AgendamentoResponse(
                 a.getId(),
+                a.getPet()     != null ? a.getPet().getId()            : null,
                 a.getPet()     != null ? a.getPet().getNome()          : null,
+                a.getServico() != null ? a.getServico().getId()        : null,
                 a.getServico() != null ? a.getServico().getDescricao() : null,
                 a.getServico() != null ? a.getServico().getPreco()     : null,
+                a.getUnidade() != null ? a.getUnidade().getId()        : null,
                 a.getUnidade() != null ? a.getUnidade().getNome()      : null,
                 a.getDataHora(), a.getStatus(), a.getObservacoes());
     }
