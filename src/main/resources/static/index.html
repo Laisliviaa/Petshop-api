@@ -455,12 +455,13 @@
     if (apiKey()) headers['X-API-Key'] = apiKey();
     if (method === 'POST') headers['X-Idempotency-Key'] = crypto.randomUUID();
     const res = await fetch(BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.mensagem || err.message || err.erro || `Erro ${res.status}`);
-    }
     if (res.status === 204) return null;
-    return res.json();
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      const msg = data?.mensagem || data?.message || data?.erro || `Erro ${res.status}`;
+      throw new Error(msg);
+    }
+    return data;
   }
 
   function goTo(section) {
@@ -660,19 +661,31 @@
   `;}
   function clienteBody() { return { nome: v('f_nome'), cpf: v('f_cpf').replace(/\D/g,'').substring(0,11) }; }
 
-  function petFields(d={}) { return `
+  async function petFields(d={}) {
+    const clientes = await req('/api/v1/clientes?size=100').catch(()=>({_embedded:{clienteResponseList:[]}}));
+    const lista = clientes?._embedded?.clienteResponseList || [];
+    const opts = lista.map(c => `<option value="${c.id}" ${d.cliente?.id==c.id?'selected':''}>${c.nome} (CPF: ${c.cpf})</option>`).join('');
+    return `
     <div class="form-group"><label>Nome *</label><input id="f_nome" value="${d.nome||''}" placeholder="Rex" /></div>
     <div class="form-group"><label>Espécie</label><input id="f_especie" value="${d.especie||''}" placeholder="Cachorro" /></div>
-    <div class="form-group"><label>ID do Cliente</label><input id="f_clienteId" type="number" value="${d.cliente?.id||''}" placeholder="1" /></div>
+    <div class="form-group"><label>Cliente *</label><select id="f_clienteId"><option value="">Selecione...</option>${opts}</select></div>
   `;}
-  function petBody() { const cId=v('f_clienteId'); return { nome:v('f_nome'), especie:v('f_especie'), cliente:cId?{id:Number(cId)}:null }; }
+  function petBody() { const cId=v('f_clienteId'); return { nome:v('f_nome'), especie:v('f_especie'), clienteId:cId?Number(cId):null }; }
 
-  function agendamentoFields(d={}) {
+  async function agendamentoFields(d={}) {
     const dt = d.dataHora ? d.dataHora.substring(0,16) : '';
+    const [pets, servicos, unidades] = await Promise.all([
+      req('/api/v1/pets?size=100').catch(()=>({_embedded:{petResponseList:[]}})),
+      req('/api/v1/servicos?size=100').catch(()=>({_embedded:{servicoResponseList:[]}})),
+      req('/api/v1/unidades?size=100').catch(()=>({_embedded:{unidadeResponseList:[]}}))
+    ]);
+    const optsPets = (pets?._embedded?.petResponseList||[]).map(p=>`<option value="${p.id}" ${d.pet?.id==p.id?'selected':''}>${p.nome} (${p.especie})</option>`).join('');
+    const optsServicos = (servicos?._embedded?.servicoResponseList||[]).map(s=>`<option value="${s.id}" ${d.servico?.id==s.id?'selected':''}>${s.descricao} — R$ ${s.preco}</option>`).join('');
+    const optsUnidades = (unidades?._embedded?.unidadeResponseList||[]).map(u=>`<option value="${u.id}" ${d.unidade?.id==u.id?'selected':''}>${u.nome}</option>`).join('');
     return `
-    <div class="form-group"><label>ID do Pet *</label><input id="f_petId" type="number" value="${d.pet?.id||''}" placeholder="1" /></div>
-    <div class="form-group"><label>ID do Serviço *</label><input id="f_servicoId" type="number" value="${d.servico?.id||''}" placeholder="1 = Banho e Tosa, 2 = Consulta..." /></div>
-    <div class="form-group"><label>ID da Unidade *</label><input id="f_unidadeId" type="number" value="${d.unidade?.id||''}" placeholder="1 = Centro, 2 = Zona Sul..." /></div>
+    <div class="form-group"><label>Pet *</label><select id="f_petId"><option value="">Selecione...</option>${optsPets}</select></div>
+    <div class="form-group"><label>Serviço *</label><select id="f_servicoId"><option value="">Selecione...</option>${optsServicos}</select></div>
+    <div class="form-group"><label>Unidade *</label><select id="f_unidadeId"><option value="">Selecione...</option>${optsUnidades}</select></div>
     <div class="form-group"><label>Data e hora *</label><input id="f_dataHora" type="datetime-local" value="${dt}" /></div>
     <div class="form-group"><label>Status</label>
       <select id="f_status">${['PENDENTE','CONCLUIDO','CANCELADO'].map(s=>`<option ${d.status===s?'selected':''}>${s}</option>`).join('')}</select>
@@ -682,9 +695,9 @@
   function agendamentoBody() {
     const pId=v('f_petId'); const sId=v('f_servicoId'); const uId=v('f_unidadeId');
     return {
-      pet:     pId ? {id:Number(pId)} : null,
-      servico: sId ? {id:Number(sId)} : null,
-      unidade: uId ? {id:Number(uId)} : null,
+      petId:     pId ? Number(pId) : null,
+      servicoId: sId ? Number(sId) : null,
+      unidadeId: uId ? Number(uId) : null,
       dataHora: v('f_dataHora'),
       status: v('f_status'),
       observacoes: v('f_observacoes') || null
@@ -703,11 +716,14 @@
   `;}
   function unidadeBody() { return { nome:v('f_nome'), endereco:v('f_endereco') }; }
 
-  function gerenteFields(d={}) { return `
-    <div class="form-group"><label>Nome *</label><input id="f_nome" value="${d.nome||''}" placeholder="Maria Souza" /></div>
-    <div class="form-group"><label>ID da Unidade</label><input id="f_unidadeId" type="number" value="${d.unidade?.id||''}" placeholder="1" /></div>
+  async function gerenteFields(d={}) {
+    const unidades = await req('/api/v1/unidades?size=100').catch(()=>({_embedded:{unidadeResponseList:[]}}));
+    const opts = (unidades?._embedded?.unidadeResponseList||[]).map(u=>`<option value="${u.id}" ${d.unidade?.id==u.id?'selected':''}>${u.nome}</option>`).join('');
+    return `
+    <div class="form-group"><label>Nome *</label><input id="f_nome" value="${d.nome||''}" placeholder="João Silva" /></div>
+    <div class="form-group"><label>Unidade *</label><select id="f_unidadeId"><option value="">Selecione...</option>${opts}</select></div>
   `;}
-  function gerenteBody() { const uId=v('f_unidadeId'); return { nome:v('f_nome'), unidade:uId?{id:Number(uId)}:null }; }
+  function gerenteBody() { const uId=v('f_unidadeId'); return { nome:v('f_nome'), unidadeId:uId?Number(uId):null }; }
 
   function v(id) { return document.getElementById(id)?.value || ''; }
 
@@ -718,7 +734,7 @@
     document.getElementById('modalTitle').textContent = id ? 'Editar registro' : 'Novo registro';
     let data = {};
     if (id) { try { data = await req(cfg.path + '/' + id); } catch(e) {} }
-    document.getElementById('modalForm').innerHTML = cfg.fields(data);
+    document.getElementById('modalForm').innerHTML = await cfg.fields(data);
     document.getElementById('modalOverlay').classList.add('open');
   }
   function fecharModal() { document.getElementById('modalOverlay').classList.remove('open'); editingId = null; }
