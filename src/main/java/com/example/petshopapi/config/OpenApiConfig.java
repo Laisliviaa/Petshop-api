@@ -16,77 +16,21 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("🐾 Petshop API")
                         .description("""
-                                API REST de gestão de PetShop — Projeto Senac TSI.
-
-                                ---
-
-                                ## Autenticação
-
-                                Use o header `X-API-Key` em todas as operações de escrita (POST, PUT, DELETE).
-                                Endpoints `GET` são públicos.
-
-                                **Chaves pré-carregadas:**
-                                | Chave | Role | Permissões |
-                                |---|---|---|
-                                | `petshop-admin-key-2026` | ADMIN | GET + POST + PUT + DELETE |
-                                | `petshop-funcionario-key-2026` | FUNCIONARIO | GET + POST + PUT |
-                                | `petshop-visitante-key-2026` | VISITANTE | somente GET |
-
-                                ---
-
-                                ## Versionamento por Header
-
-                                Esta API utiliza **versionamento por header** (`X-API-Version`), que é a abordagem
-                                recomendada para APIs REST pois mantém as URLs estáveis e desacopla a versão
-                                do endereço do recurso.
-
-                                | Valor do header | Comportamento |
+                                API REST para gestão de PetShop — Projeto Senac TSI.
+                                
+                                **Autenticação:** Use o header `X-API-Key` em POST, PUT e DELETE. GETs são públicos.
+                                
+                                | Chave | Role |
                                 |---|---|
-                                | `1` ou ausente | Resposta padrão com HATEOAS (padrão) |
-                                | `2` | Resposta enriquecida com metadados de paginação |
-                                | Qualquer outro valor | HTTP 400 Bad Request |
-
-                                ---
-
-                                ## Rate Limiting
-
-                                | Tipo | Limite |
-                                |---|---|
-                                | GET (leitura) | 10 req / 30s por IP |
-                                | POST / PUT / DELETE (escrita) | 5 req / 30s por IP |
-
-                                Ao exceder: HTTP 429 com header `Retry-After` informando segundos até reset.
-
-                                ---
-
-                                ## Idempotência
-
-                                Endpoints de escrita suportam o header `X-Idempotency-Key` (UUID):
-
-                                | Cenário | Comportamento |
-                                |---|---|
-                                | Chave nova | Processa normalmente e armazena resultado |
-                                | Mesma chave + mesmo payload | Retorna resposta original (sem reprocessar) |
-                                | Mesma chave + payload diferente | HTTP 409 Conflict |
-
-                                ---
-
-                                ## Formato de Erros
-
-                                Todos os erros seguem o mesmo formato JSON (`ApiErrorResponse`):
-```json
-                                {
-                                  "timestamp": "2026-06-10T09:00:00",
-                                  "status": 404,
-                                  "erro": "Not Found",
-                                  "mensagem": "Cliente com ID 99 não encontrado.",
-                                  "caminho": "/api/v1/clientes/99",
-                                  "metodo": "GET",
-                                  "detalhes": null
-                                }
-```
-                                O campo `detalhes` é preenchido apenas em erros de validação (HTTP 400),
-                                listando cada campo inválido.
+                                | `petshop-admin-key-2026` | ADMIN |
+                                | `petshop-funcionario-key-2026` | FUNCIONARIO |
+                                | `petshop-visitante-key-2026` | VISITANTE |
+                                
+                                **Versionamento:** Header `X-API-Version: 1` (padrão) ou `2` (com metadados extras).
+                                
+                                **Rate Limiting:** 10 GET / 5 escritas por 30s por IP. Excedeu → HTTP 429.
+                                
+                                **Idempotência:** Use `X-Idempotency-Key` em POST e PUT para evitar duplicidade.
                                 """)
                         .version("2.0.0")
                         .contact(new Contact()
