@@ -74,7 +74,7 @@ public class OpenApiConfig {
                                 ## Formato de Erros
 
                                 Todos os erros seguem o mesmo formato JSON (`ApiErrorResponse`):
-                                ```json
+```json
                                 {
                                   "timestamp": "2026-06-10T09:00:00",
                                   "status": 404,
@@ -84,7 +84,7 @@ public class OpenApiConfig {
                                   "metodo": "GET",
                                   "detalhes": null
                                 }
-                                ```
+```
                                 O campo `detalhes` é preenchido apenas em erros de validação (HTTP 400),
                                 listando cada campo inválido.
                                 """)
@@ -93,6 +93,9 @@ public class OpenApiConfig {
                                 .name("Senac TSI — Desenvolvimento de Web Services")
                                 .email("senac@example.com"))
                         .license(new License().name("MIT").url("https://opensource.org/licenses/MIT")))
+                .addServersItem(new Server()
+                        .url("https://petshop-api-23cd.onrender.com")
+                        .description("Servidor Render (produção)"))
                 .addServersItem(new Server()
                         .url("http://localhost:8080")
                         .description("Servidor de desenvolvimento local"))
